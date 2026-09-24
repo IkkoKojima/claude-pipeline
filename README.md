@@ -102,6 +102,7 @@ workflows = ["android-internal", "ios-testflight"]
 ### provider インターフェース
 
 `scripts/providers/<type>.sh <fn>`: `preflight` / `deploy <version> <sha>` / `status <id>` / `secrets_list` / `notes_limits`。`supabase-mcp` は MCP を使う手順書。
+各 `[[release.providers]]` には共通で `only_if_changed = ["glob", ...]` を書ける (PREV..RELEASE_SHA にその差分が無ければ「スキップ (差分なし)」)。`--scope type,...` は provider の type で絞る。
 
 ## 配布の仕組み
 
