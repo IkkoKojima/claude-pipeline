@@ -1,0 +1,12 @@
+{
+  "name": "pipeline-spike-mkt",
+  "owner": { "name": "IkkoKojima" },
+  "plugins": [
+    {
+      "name": "pipeline-spike",
+      "source": "./plugins/pipeline-spike",
+      "description": "Spike plugin: one skill and one SessionStart hook",
+      "version": "0.1.0"
+    }
+  ]
+}
