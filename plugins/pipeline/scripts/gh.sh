@@ -122,6 +122,18 @@ render_template() {  # file → {repo} / {status_issue_title} を置換して st
 }
 
 # ---------------------------------------------------------------------------------------------
+# in_list <改行区切りの一覧> <名前> — 大文字小文字を区別せず完全一致 (GitHub のラベル名は case-insensitive)。
+# grep -i は Git Bash で落ちることがあるので bash の nocasematch で比べる
+in_list() {
+  local l hit=1
+  shopt -s nocasematch
+  while IFS= read -r l; do
+    if [[ -n "$l" && "$l" == "$2" ]]; then hit=0; break; fi
+  done <<< "$1"
+  shopt -u nocasematch
+  return "$hit"
+}
+
 cmd_ensure_labels() {
   local R existing k name color desc err
   load_labels
@@ -129,7 +141,7 @@ cmd_ensure_labels() {
   existing="$(_gh api --paginate "$R/labels?per_page=100" --jq '.[].name')"
   while IFS=$'\t' read -r k name; do
     [[ -n "$name" ]] || continue
-    if printf '%s\n' "$existing" | grep -Fxiq -- "$name"; then echo "EXISTS=$name"; continue; fi
+    if in_list "$existing" "$name"; then echo "EXISTS=$name"; continue; fi
     case "$k" in
       ready)             color=0E8A16; desc="自動実装パイプライン: 次の sweep が着手してよい" ;;
       in_progress)       color=FBCA04; desc="自動実装パイプライン: セッションが処理中 (6 時間無反応なら sweep が回収)" ;;

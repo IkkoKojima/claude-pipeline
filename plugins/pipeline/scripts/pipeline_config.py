@@ -159,6 +159,10 @@ def git_repo_slug(root: Path) -> str:
     except OSError:
         return ""
     m = re.search(r"github\.com[:/]([^/]+)/([^/]+?)(?:\.git)?/?$", url)
+    if m:
+        return f"{m.group(1)}/{m.group(2)}"
+    # クラウドセッションの origin は proxy URL のことがある → 末尾の owner/name を使う
+    m = re.search(r"([^/:]+)/([^/:]+?)(?:\.git)?/?$", url)
     return f"{m.group(1)}/{m.group(2)}" if m else ""
 
 
