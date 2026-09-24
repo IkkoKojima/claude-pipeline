@@ -35,16 +35,17 @@ PY="${PIPELINE_PYTHON:-python3}"
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 
 usage() {
-  echo "usage: $0 [--changed FILE | --all] [--base origin/main]" >&2
+  echo "usage: $0 [--changed FILE | --all | --always] [--base origin/main]" >&2
   exit 2
 }
 
-CHANGED_SRC=""; RUN_ALL=0; BASE="origin/main"
+CHANGED_SRC=""; RUN_ALL=0; RUN_ALWAYS=0; BASE="origin/main"
 while [ $# -gt 0 ]; do
   case "$1" in
     --changed) [ $# -ge 2 ] || usage; CHANGED_SRC="$2"; shift 2 ;;
     --changed=*) CHANGED_SRC="${1#*=}"; shift ;;
     --all) RUN_ALL=1; shift ;;
+    --always) RUN_ALWAYS=1; shift ;;   # 全 stack の verify_always だけ (sweep の main 健全性チェック)
     --base) [ $# -ge 2 ] || usage; BASE="$2"; shift 2 ;;
     --base=*) BASE="${1#*=}"; shift ;;
     -h|--help) sed -n '2,30p' "${BASH_SOURCE[0]}" >&2; exit 0 ;;
@@ -83,7 +84,9 @@ rm -f "$LOG_DIR"/*.log 2>/dev/null
 normalize() { tr -d '\r' | sed -e 's#\\#/#g' -e 's#^\./##' -e '/^[[:space:]]*$/d' | grep -v '^\.pipeline/' | sort -u; }
 
 MODE="changed"
-if [ $RUN_ALL -eq 1 ]; then
+if [ $RUN_ALWAYS -eq 1 ]; then
+  MODE="always"
+elif [ $RUN_ALL -eq 1 ]; then
   MODE="all"
 elif [ -z "$CHANGED_SRC" ]; then
   if git rev-parse --verify -q "$BASE^{commit}" >/dev/null 2>&1; then
@@ -104,7 +107,9 @@ fi
 
 # ---- 計画 ---------------------------------------------------------------------------------
 PLAN_JSON="$LOG_DIR/plan.json"
-if [ "$MODE" = all ]; then
+if [ "$MODE" = always ]; then
+  "$PY" "$KIT/scripts/pipeline_config.py" --root "$ROOT" plan --always > "$PLAN_JSON" || { echo "verify.sh: plan の生成に失敗" >&2; echo "VERIFY=fail STEPS=0 FAILED=0"; exit 1; }
+elif [ "$MODE" = all ]; then
   "$PY" "$KIT/scripts/pipeline_config.py" --root "$ROOT" plan --all > "$PLAN_JSON" || { echo "verify.sh: plan の生成に失敗" >&2; echo "VERIFY=fail STEPS=0 FAILED=0"; exit 1; }
 else
   printf '%s\n' "$CHANGED" | "$PY" "$KIT/scripts/pipeline_config.py" --root "$ROOT" plan --changed - > "$PLAN_JSON" \

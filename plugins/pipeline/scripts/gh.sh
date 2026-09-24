@@ -17,8 +17,8 @@
 #   gh.sh label-add N <label>            ADDED=<label>
 #   gh.sh label-del N <label>            REMOVED=<label> / ABSENT=<label> (404 は無視)
 #   gh.sh comment N <file|->             COMMENT_ID=<id> / URL=<url>
-#   gh.sh issues-ready                   ready 付きで in_progress / blocked / merged_unverified / skipped の無い open issue (古い順、番号のみ)
-#   gh.sh issues-in-progress             in_progress 付きの open issue (古い順、番号のみ)
+#   gh.sh issues-ready                   ready 付きで in_progress / blocked / merged_unverified / skipped の無い open issue (番号順 = 古い順、番号のみ)
+#   gh.sh issues-in-progress             in_progress 付きの open issue (番号順、番号のみ)
 #   gh.sh last-labeled N <label>         そのラベルが最後に付いた時刻 (ISO 8601)。付いたことが無ければ何も出さない (exit 0)
 #   gh.sh pr-open-release                head ブランチが release/ で始まる open PR の番号
 #   gh.sh issue-create --title T --body-file F [--label L ...]   作成した issue の番号 (F に - を渡すと標準入力)
@@ -318,8 +318,8 @@ main() {
     label-add)          cmd_label_add "$@" ;;
     label-del)          cmd_label_del "$@" ;;
     comment)            cmd_comment "$@" ;;
-    issues-ready)       cmd_issues_ready ;;
-    issues-in-progress) cmd_issues_in_progress ;;
+    issues-ready)       cmd_issues_ready | sort -n ;;
+    issues-in-progress) cmd_issues_in_progress | sort -n ;;
     last-labeled)       cmd_last_labeled "$@" ;;
     pr-open-release)    cmd_pr_open_release ;;
     issue-create)       cmd_issue_create "$@" ;;

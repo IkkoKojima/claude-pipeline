@@ -36,6 +36,9 @@ DEFAULT_PROMPT = PLUGIN_ROOT / "templates" / "routine-prompt.md"
 sys.path.insert(0, str(HERE))
 import pipeline_config as pc  # noqa: E402
 
+if hasattr(sys.stderr, "reconfigure"):  # Windows の既定 (cp932) で日本語のメッセージが化けないように
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 MODEL_IDS = {
     "fable": "claude-fable-5-1",
     "opus": "claude-opus-5-5",
