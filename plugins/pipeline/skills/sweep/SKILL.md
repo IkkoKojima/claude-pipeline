@@ -12,8 +12,12 @@ KIT="${CLAUDE_PLUGIN_ROOT:-}"; [ -d "$KIT/scripts" ] || KIT=/opt/pipeline/kit/pl
 [ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
 PC="python3 $KIT/scripts/pipeline_config.py"; GH="bash $KIT/scripts/gh.sh"
 SLUG="$($PC repo)"; L="$($PC labels)"; MAX="$($PC get sweep.max_issues)"; BUDGET="$($PC get sweep.hours_budget)"
-STATUS="$($GH status-issue)"; T0=$(date +%s); mkdir -p .pipeline
+STATUS="$($GH status-issue)"; T0=$(date +%s); mkdir -p .pipeline; START_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+KIT_SHA="$(cat "$(dirname "$(dirname "$KIT")")/.sha" 2>/dev/null | cut -c1-7)"
 ```
+
+- ラベル名は `L` (JSON) のキー → 値で引く (`$GH label-name ready` でも可)。以下の `<ready>` などはその値
+- `pipeline.toml` が無い / `validate` が NG → (a) 起動障害として固定 issue にコメントして終了 (setup 未完か、まだ main にマージされていない)
 
 開始時刻を控え、`BUDGET` 時間を過ぎたら新しい issue に着手しない。1 run の上限は `MAX` 件。
 
@@ -48,7 +52,7 @@ STATUS="$($GH status-issue)"; T0=$(date +%s); mkdir -p .pipeline
 - routine-fire-payload に `issues: 30 31` の行があれば、**その番号だけ**を対象にする (ready でないものはスキップして理由を報告)
 - 無ければ `$GH issues-ready` (番号順)。`Depends on: #M` が open のものは後回し。回収分を含めて合計 `MAX` 件まで
 - claim は `/pipeline:impl` の手順 1 (in_progress → 「着手」コメント → 10 秒後に再確認)
-- `--dry-run` はここで「選択した issue / 健全性 / 回収候補」を固定 issue にコメントして終了 (claim しない)
+- `--dry-run` はここで終了する (claim しない)。コメントは手順 5 の書式 1 本だけ (先頭行に `(dry-run)` を付け、対象 = 選択した issue、回収候補、健全性を書く)
 
 ## 4. 実行
 
@@ -57,10 +61,10 @@ STATUS="$($GH status-issue)"; T0=$(date +%s); mkdir -p .pipeline
 ## 5. 要約 (固定 issue に 1 コメント)
 
 ```
-sweep <ISO 時刻> (session: <URL or id>) kit=<$PIPELINE_ROOT/kit/.sha の先頭 7 桁>
+sweep <ISO 時刻> (session: <URL or id>) kit=$KIT_SHA
 - 対象: #12 #15 / 回収: #9 / 指定: (payload があれば)
 - 結果: #9 merged (PR #30, 計画 1 往復, エスカレーション 0), #12 blocked (理由), #15 未着手 (時間切れ)
 - main: ok (<verify の要約>) / 所要: 1h48m / Fable 代替: なし / 未解決の指摘: PR #30 M2
 ```
 
-`$GH comment "$STATUS" -` で投稿する。
+`$GH comment "$STATUS" -` で投稿する。最後に `git checkout -q "$START_BRANCH"` で元のブランチに戻す (detach のままにしない)。

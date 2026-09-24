@@ -21,7 +21,7 @@ description: issue を「計画 → 計画レビュー (Codex / Fable 代替) �
 KIT="${CLAUDE_PLUGIN_ROOT:-}"; [ -d "$KIT/scripts" ] || KIT=/opt/pipeline/kit/plugins/pipeline
 [ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
 PC="python3 $KIT/scripts/pipeline_config.py"; GH="bash $KIT/scripts/gh.sh"
-SLUG="$($PC repo)"; R="repos/$SLUG"; L="$($PC labels)"      # L は JSON: ready / in_progress / merged_unverified / blocked / skipped
+SLUG="$($PC repo)"; R="repos/$SLUG"; L="$($PC labels)"      # L は JSON: ready / in_progress / merged_unverified / blocked / skipped (値が実ラベル名。`$GH label-name <key>` でも引ける)
 echo "PIPELINE_ENV=${PIPELINE_ENV:-unset} REMOTE=${CLAUDE_CODE_REMOTE:-} repo=$SLUG branch=$(git rev-parse --abbrev-ref HEAD) codex=$(codex --version 2>/dev/null || echo none)"
 $PC validate && git fetch origin main --quiet && git status --short | head
 mkdir -p .pipeline

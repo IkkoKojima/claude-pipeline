@@ -138,8 +138,8 @@ STEP_STACK=(); STEP_PATH=(); STEP_KIND=(); STEP_CMD=()
 eval "$PLAN_SH"
 
 N=${#STEP_CMD[@]}
-if [ "$MODE" = all ]; then
-  echo "verify.sh: mode=all steps=$N"
+if [ "$MODE" = all ] || [ "$MODE" = always ]; then
+  echo "verify.sh: mode=$MODE steps=$N"
 else
   echo "verify.sh: mode=changed files=$(printf '%s\n' "$CHANGED" | grep -c . ) source=${CHANGED_SRC:-git diff $BASE...HEAD + uncommitted} steps=$N"
 fi
