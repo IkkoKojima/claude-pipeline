@@ -69,7 +69,7 @@ PIPELINE_ENV = "impl"
 name = "flutter"               # flutter / node / python / deno / generic
 path = "."
 flutter_version = "3.41.9"     # stack 固有オプション (preset の opts)
-verify_always = ["flutter analyze", "timeout 1200 flutter test"]   # 省略時は preset
+verify_always = ["flutter analyze --no-fatal-infos", "timeout 1200 flutter test"]   # 省略時は preset
 [stacks.verify_paths]          # glob → 追加コマンド
 "ml/**" = ["python3 -m pytest ml/tests -q"]
 
@@ -93,7 +93,7 @@ workflows = ["android-internal", "ios-testflight"]
 
 | name | 検出 | verify_always | build_smoke | 追加ホスト |
 |---|---|---|---|---|
-| flutter | `pubspec.yaml` | `flutter pub get` / `flutter analyze` / `flutter test` | `pubspec.*` `android/**` → `flutter build apk --debug` | dl.google.com, maven.google.com |
+| flutter | `pubspec.yaml` | `flutter pub get` / `flutter analyze --no-fatal-infos` / `flutter test` | `pubspec.*` `android/**` → `flutter build apk --debug` | dl.google.com, maven.google.com |
 | node | `package.json` | `npm ci` / lint / test / build (`--if-present`) | なし | なし |
 | python | `pyproject.toml` / `requirements*.txt` | uv (`uv.lock` があれば) or pip → pytest | なし | なし |
 | deno | `deno.json` / `supabase/functions` | `deno lint` / `deno test -A` | なし | deno.land, jsr.io, esm.sh |

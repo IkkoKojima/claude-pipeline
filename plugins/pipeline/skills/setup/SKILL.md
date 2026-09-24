@@ -9,7 +9,8 @@ description: 自動実装パイプラインをこのリポジトリに導入・�
 ローカルの OAuth が要る)。質問は最小限で、推奨案を示して確認を取る形にする。**シークレットは受け取らない** (貼り付け先の案内だけ)。
 
 ```bash
-KIT="${CLAUDE_PLUGIN_ROOT:-$(ls -d ~/.claude/plugins/cache/*/pipeline/* 2>/dev/null | head -1)}"
+KIT="${CLAUDE_PLUGIN_ROOT:-}"; [ -d "$KIT/scripts" ] || KIT=/opt/pipeline/kit/plugins/pipeline
+[ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
 PC="python3 $KIT/scripts/pipeline_config.py"; EA="python3 $KIT/scripts/env_api.py"; GH="bash $KIT/scripts/gh.sh"
 ```
 

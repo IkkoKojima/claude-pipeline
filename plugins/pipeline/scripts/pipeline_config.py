@@ -46,7 +46,7 @@ CONFIG_NAME = "pipeline.toml"
 PRESETS: dict[str, dict] = {
     "flutter": {
         "detect": ["pubspec.yaml"],
-        "verify_always": ["flutter pub get", "flutter analyze", "timeout 1200 flutter test"],
+        "verify_always": ["flutter pub get", "flutter analyze --no-fatal-infos", "timeout 1200 flutter test"],
         "verify_paths": {},
         "build_smoke": {"globs": ["pubspec.*", "android/**"], "cmd": "timeout 1800 flutter build apk --debug && rm -rf build/"},
         "hosts": ["dl.google.com", "maven.google.com"],

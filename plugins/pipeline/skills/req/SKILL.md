@@ -8,7 +8,9 @@ description: オーナーの一言から対話で要件を固め、テンプレ�
 思いつき (例: 「設定画面にダークモード切替を足したい」) を、パイプラインが着手できる issue に落とす。GitHub 操作は REST (`gh.sh`)。
 
 ```bash
-KIT="${CLAUDE_PLUGIN_ROOT:-$(ls -d ~/.claude/plugins/cache/*/pipeline/* 2>/dev/null | head -1)}"; PC="python3 $KIT/scripts/pipeline_config.py"; GH="bash $KIT/scripts/gh.sh"
+KIT="${CLAUDE_PLUGIN_ROOT:-}"; [ -d "$KIT/scripts" ] || KIT=/opt/pipeline/kit/plugins/pipeline
+[ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
+PC="python3 $KIT/scripts/pipeline_config.py"; GH="bash $KIT/scripts/gh.sh"
 SLUG="$($PC repo)"; READY="$($PC labels | python3 -c 'import json,sys; print(json.load(sys.stdin)["ready"])')"
 ```
 

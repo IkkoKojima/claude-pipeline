@@ -8,7 +8,9 @@ description: routine が呼ぶ無人運転の入口。リリースロック → 
 無人で走る前提 (質問しない)。GitHub 操作は REST (`gh.sh`) と GitHub MCP のみ。
 
 ```bash
-KIT="${CLAUDE_PLUGIN_ROOT:-/opt/pipeline/kit/plugins/pipeline}"; PC="python3 $KIT/scripts/pipeline_config.py"; GH="bash $KIT/scripts/gh.sh"
+KIT="${CLAUDE_PLUGIN_ROOT:-}"; [ -d "$KIT/scripts" ] || KIT=/opt/pipeline/kit/plugins/pipeline
+[ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
+PC="python3 $KIT/scripts/pipeline_config.py"; GH="bash $KIT/scripts/gh.sh"
 SLUG="$($PC repo)"; L="$($PC labels)"; MAX="$($PC get sweep.max_issues)"; BUDGET="$($PC get sweep.hours_budget)"
 STATUS="$($GH status-issue)"; T0=$(date +%s); mkdir -p .pipeline
 ```

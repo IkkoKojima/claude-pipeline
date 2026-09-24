@@ -9,7 +9,9 @@ description: 配信セッション (deploy 環境、オーナー起動)。対象
 待ちに入る前に必ず issue 本文を更新し、再開時は issue 本文の「未」の工程だけを実行する。GitHub 操作は REST と GitHub MCP のみ。
 
 ```bash
-KIT="${CLAUDE_PLUGIN_ROOT:-/opt/pipeline/kit/plugins/pipeline}"; PC="python3 $KIT/scripts/pipeline_config.py"; GH="bash $KIT/scripts/gh.sh"
+KIT="${CLAUDE_PLUGIN_ROOT:-}"; [ -d "$KIT/scripts" ] || KIT=/opt/pipeline/kit/plugins/pipeline
+[ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
+PC="python3 $KIT/scripts/pipeline_config.py"; GH="bash $KIT/scripts/gh.sh"
 SLUG="$($PC repo)"; R="repos/$SLUG"; L="$($PC labels)"; PROVIDERS="$($PC get release.providers)"; NOTES="$($PC get release.notes_dir)"
 echo "PIPELINE_ENV=${PIPELINE_ENV:-unset} providers=$(echo "$PROVIDERS" | python3 -c 'import json,sys; print(",".join(p["type"] for p in json.load(sys.stdin)))')"
 git fetch origin main --tags --quiet; mkdir -p .pipeline

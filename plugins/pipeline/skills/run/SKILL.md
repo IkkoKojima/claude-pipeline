@@ -6,7 +6,9 @@ description: この repo の sweep routine を今すぐ 1 回起動する (ロ�
 # /pipeline:run [N ...]
 
 ```bash
-KIT="${CLAUDE_PLUGIN_ROOT:-$(ls -d ~/.claude/plugins/cache/*/pipeline/* 2>/dev/null | head -1)}"
+KIT="${CLAUDE_PLUGIN_ROOT:-}"; [ -d "$KIT/scripts" ] || KIT=/opt/pipeline/kit/plugins/pipeline
+[ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
+PC="python3 $KIT/scripts/pipeline_config.py"; GH="bash $KIT/scripts/gh.sh"
 python3 $KIT/scripts/routine_body.py run --issues "$@"     # {"text": "issues: 46 47"} または {"text": "sweep"}
 ```
 
