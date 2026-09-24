@@ -25,6 +25,10 @@ claude                 # 対象 repo で
 /pipeline:setup        # スタック検出 → pipeline.toml → クラウド環境 (API) → routine → ラベル / 固定 issue → 疎通 run → 貼り付け案内
 ```
 
+`/pipeline:setup` は**オーナーの対話セッション**で実行する (routine 作成に使う `RemoteTrigger` はサブエージェントや非対話実行には無い)。
+生成した `pipeline.toml` は **main に入って初めて効く** (クラウドは main を clone する) ので、保護ブランチや CI がある repo では PR とその完了を待ってから疎通 run に進む。
+既存 CI があれば、その apt 依存・テストコマンド・集約 check 名を `pipeline.toml` に揃える (setup が案内する)。
+
 貼り付けるもの: 環境の API credentials に `OPENAI_API_KEY` (任意。無ければ計画レビューは Fable 代替)。配信を使うなら `/pipeline:setup --deploy` の案内に従う。
 
 日常: `/pipeline:req <一言>` で issue → 定時 sweep を待つか `/pipeline:run N` → 固定 issue `#pipeline-status` の要約 → `/pipeline:release patch` → 実機確認の結果を返す。
@@ -73,6 +77,14 @@ verify_always = ["flutter analyze --no-fatal-infos", "timeout 1200 flutter test"
 [stacks.verify_paths]          # glob → 追加コマンド
 "ml/**" = ["python3 -m pytest ml/tests -q"]
 
+[labels]                       # 省略時の既定。既存ラベルと衝突するときだけ変える
+ready = "pv:ready"
+in_progress = "pv:in-progress"
+merged_unverified = "pv:merged-unverified"
+blocked = "pv:blocked"
+skipped = "pv:skipped"
+release = "release"
+
 [verify]
 forbidden_paths = []           # 既定 (pipeline.toml .claude/** .github/** codemagic.yaml) に追加
 review_focus = []              # 計画レビューで特に見る領域
@@ -94,9 +106,9 @@ workflows = ["android-internal", "ios-testflight"]
 | name | 検出 | verify_always | build_smoke | 追加ホスト |
 |---|---|---|---|---|
 | flutter | `pubspec.yaml` | `flutter pub get` / `flutter analyze --no-fatal-infos` / `flutter test` | `pubspec.*` `android/**` → `flutter build apk --debug` | dl.google.com, maven.google.com |
-| node | `package.json` | `npm ci` / lint / test / build (`--if-present`) | なし | なし |
-| python | `pyproject.toml` / `requirements*.txt` | uv (`uv.lock` があれば) or pip → pytest | なし | なし |
-| deno | `deno.json` / `supabase/functions` | `deno lint` / `deno test -A` | なし | deno.land, jsr.io, esm.sh |
+| node | `package.json` | `npm ci` / lint / test / build (`--if-present`) | なし | nodejs.org |
+| python | `pyproject.toml` / `requirements*.txt` | uv (`uv.lock` があれば) or pip → pytest | なし | astral.sh |
+| deno | `deno.json` / `supabase/functions` (検出時の path は `supabase`) | `deno test -A` | なし | deno.land, dl.deno.land, jsr.io, esm.sh |
 | generic | なし | なし (pipeline.toml に書く) | なし | なし |
 
 ### provider インターフェース

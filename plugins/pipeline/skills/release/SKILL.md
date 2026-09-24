@@ -10,7 +10,7 @@ description: 配信セッション (deploy 環境、オーナー起動)。対象
 
 ```bash
 KIT="${CLAUDE_PLUGIN_ROOT:-}"; [ -d "$KIT/scripts" ] || KIT=/opt/pipeline/kit/plugins/pipeline
-[ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
+[ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline*' -path '*/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
 PC="python3 $KIT/scripts/pipeline_config.py"; GH="bash $KIT/scripts/gh.sh"
 SLUG="$($PC repo)"; R="repos/$SLUG"; PROVIDERS="$($PC get release.providers)"; NOTES="$($PC get release.notes_dir)"
 L_RELEASE="$($GH label-name release)"; L_READY="$($GH label-name ready)"; L_MU="$($GH label-name merged_unverified)"

@@ -76,7 +76,7 @@ PRESETS: dict[str, dict] = {
     },
     "deno": {
         "detect": ["deno.json", "deno.jsonc", "supabase/functions"],
-        "verify_always": ["deno lint", "deno test -A"],
+        "verify_always": ["deno test -A"],   # lint は web/ 等の TS を巻き込みやすいので既定に入れない
         "verify_paths": {},
         "build_smoke": None,
         "hosts": ["deno.land", "dl.deno.land", "jsr.io", "esm.sh"],
@@ -219,12 +219,13 @@ def detect(root: Path) -> list[dict]:
         for name, p in PRESETS.items():
             for marker in p["detect"]:
                 if (d / marker).exists():
-                    if name == "node" and rel != "." and (d / "package.json").exists() and (d.parent / "node_modules").exists():
-                        pass
-                    key = (name, rel)
+                    path = rel
+                    if marker == "supabase/functions":  # Edge Functions だけが対象なら supabase/ を path にする
+                        path = "supabase" if rel == "." else rel + "/supabase"
+                    key = (name, path)
                     if key not in seen:
                         seen.add(key)
-                        found.append({"name": name, "path": rel})
+                        found.append({"name": name, "path": path})
                     break
 
     consider(root)
@@ -407,6 +408,10 @@ def init_config(root: Path, stacks: list[dict] | None, force: bool, kit_repo: st
     env_name = "-".join(dict.fromkeys(s["name"] for s in stacks))
     text = INIT_TEMPLATE.format(kit_repo=kit_repo, env_name=env_name, stacks="\n".join(blocks))
     f.write_text(text, encoding="utf-8", newline="\n")
+    gi = root / ".gitignore"  # プラグインの作業ディレクトリ (.pipeline/) を ignore する
+    cur = gi.read_text(encoding="utf-8") if gi.exists() else ""
+    if not re.search(r"^\.pipeline/?\s*$", cur, re.M):
+        gi.write_text(cur + ("" if cur.endswith("\n") or not cur else "\n") + ".pipeline/\n", encoding="utf-8", newline="\n")
     return str(f)
 
 
@@ -433,6 +438,11 @@ def validate(cfg: dict) -> list[str]:
 
 # ---------------------------------------------------------------------------------------------
 def main(argv: list[str] | None = None) -> int:
+    try:  # Windows: cp932 と CRLF を避ける (SKILL.md の `$(...)` 代入に \r が混ざる)
+        sys.stdout.reconfigure(encoding="utf-8", newline="\n")
+        sys.stderr.reconfigure(encoding="utf-8", newline="\n")
+    except (AttributeError, ValueError):
+        pass
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=".", help="repo ルート (既定: カレントから探索)")
     sub = ap.add_subparsers(dest="cmd", required=True)

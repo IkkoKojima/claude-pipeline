@@ -10,9 +10,12 @@ description: 自動実装パイプラインをこのリポジトリに導入・�
 
 ```bash
 KIT="${CLAUDE_PLUGIN_ROOT:-}"; [ -d "$KIT/scripts" ] || KIT=/opt/pipeline/kit/plugins/pipeline
-[ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
+[ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline*' -path '*/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
 PC="python3 $KIT/scripts/pipeline_config.py"; EA="python3 $KIT/scripts/env_api.py"; GH="bash $KIT/scripts/gh.sh"
+mkdir -p .pipeline; grep -qE '^\.pipeline/?$' .gitignore 2>/dev/null || printf '.pipeline/\n' >> .gitignore   # 作業ディレクトリ (ログ・生成物) は ignore
 ```
+
+前提: **オーナーの対話セッション**で実行する (routine の作成に使う `RemoteTrigger` ツールはサブエージェントや非対話実行には無い)。
 
 ## 0. preflight
 
@@ -37,6 +40,8 @@ $PC validate
 
 - 検出結果を表示し「このスタック構成でよいか」を 1 回だけ確認 (複数スタックはそのまま複数 `[[stacks]]`)。
   `deno` は `supabase/functions` があるだけで検出されるので、要らなければ外す
+- **既存 CI (`.github/workflows/*.yml`) があれば読んで揃える**: apt 依存 → `env.extra_apt`、テストコマンド → 各 stack の `verify_always`、集約 check 名 → `merge.wait_for_checks`。
+  preset は一般解なので、CI と違うコマンドで通すのは避ける (通らない検証で sweep が止まる)
 - 既にあれば触らない (`--update` でも変えない)。`kit` は手順 2 で書く
 
 ## 2. クラウド環境 (API)
@@ -65,7 +70,8 @@ $EA get "$NAME" || echo "new"
 python3 $KIT/scripts/routine_body.py create --env-id "$ENV_ID" > .pipeline/routine.json
 ```
 
-- `ToolSearch select:RemoteTrigger` でツールを読み込み、`{action:"list"}` で `name` が `<repo> sweep` の routine を探す
+- `ToolSearch select:RemoteTrigger` でツールを読み込み、`{action:"list"}` で `name` が `<repo> sweep` の routine を探す。
+  **ツールが無い場合** (サブエージェント / 非対話): `.pipeline/routine.json` の内容と「claude.ai/code/routines で New routine → 同じ内容 (name / repo / 環境 / model / prompt / cron、Connectors はすべて外す) を入力」を案内して手順 4 へ進む (疎通 run はオーナーが `/pipeline:run N` で行う)
 - 無ければ `{action:"create", body:<.pipeline/routine.json の内容>}` → 続けて **必ず** `{action:"update", trigger_id, body:{"clear_mcp_connections":true}}`
   (省略すると全コネクタが付く)。あれば `routine_body.py update-prompt --env-id` の body で `update` (環境や prompt の追従) + `clear_mcp_connections`
 - 応答の `mcp_connections` が `[]`、`job_config.ccr.environment_id` が `$ENV_ID`、`enabled: true` を確認して trigger id を控える
@@ -87,8 +93,8 @@ $GH status-issue          # 無ければ作る。番号を表示
 
 - 「小さな issue を 1 つ作って今すぐ sweep を回しますか」と確認。OK なら `$GH issue-create --title "pipeline 疎通: README に導入日を追記する" --body-file <templates/issue-body.md を埋めたもの> --label <labels.ready>`
   → `RemoteTrigger {action:"run", trigger_id, body: routine_body.py run --issues N}` → 返った session URL を表示
-- `pipeline.toml` と (あれば) CLAUDE.md の変更をコミットして push する (`git add pipeline.toml CLAUDE.md && git commit -m "chore(pipeline): setup" && git push`)。
-  クラウドは main を clone するので、**push 前に run しない**
+- `pipeline.toml` / `.gitignore` / (あれば) CLAUDE.md の変更をコミットして **main に入れる** (直接 push できなければ PR → マージ。既存 CI があればその完了を待つ)。
+  クラウドは main を clone するので、**main に入る前に run しない**
 
 ## 7. 貼り付け案内 (最後に必ず表示)
 

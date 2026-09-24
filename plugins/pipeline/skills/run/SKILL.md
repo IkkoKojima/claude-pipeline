@@ -7,9 +7,9 @@ description: この repo の sweep routine を今すぐ 1 回起動する (ロ�
 
 ```bash
 KIT="${CLAUDE_PLUGIN_ROOT:-}"; [ -d "$KIT/scripts" ] || KIT=/opt/pipeline/kit/plugins/pipeline
-[ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
+[ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline*' -path '*/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
 PC="python3 $KIT/scripts/pipeline_config.py"; GH="bash $KIT/scripts/gh.sh"
-python3 $KIT/scripts/routine_body.py run --issues "$@"     # {"text": "issues: 46 47"} または {"text": "sweep"}
+python3 $KIT/scripts/routine_body.py run ${1:+--issues "$@"}     # 引数があれば {"text": "issues: 46 47"}、無ければ {"text": "sweep"}
 ```
 
 1. `ToolSearch select:RemoteTrigger` → `{action:"list"}` で `name` が `<repo> sweep` (repo は `python3 $KIT/scripts/pipeline_config.py repo`) の trigger id を探す。
