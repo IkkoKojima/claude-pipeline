@@ -1,12 +1,11 @@
 {
-  "name": "pipeline-spike-mkt",
+  "name": "claude-pipeline",
   "owner": { "name": "IkkoKojima" },
   "plugins": [
     {
-      "name": "pipeline-spike",
-      "source": "./plugins/pipeline-spike",
-      "description": "Spike plugin: one skill and one SessionStart hook",
-      "version": "0.1.0"
+      "name": "pipeline",
+      "source": "./plugins/pipeline",
+      "description": "Issue 駆動の自動実装パイプライン: /pipeline:setup で環境と routine を作り、/pipeline:req → sweep (計画 → Codex レビュー → Opus 実装 → 検証 → 自動マージ) → /pipeline:release"
     }
   ]
 }

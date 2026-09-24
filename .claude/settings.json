@@ -1,6 +1,0 @@
-{
-  "extraKnownMarketplaces": {
-    "pipeline-spike-mkt": { "source": { "source": "github", "repo": "IkkoKojima/claude-pipeline-spike" } }
-  },
-  "enabledPlugins": { "pipeline-spike@pipeline-spike-mkt": true }
-}

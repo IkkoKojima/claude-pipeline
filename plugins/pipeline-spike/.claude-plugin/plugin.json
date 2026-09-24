@@ -1,5 +1,0 @@
-{
-  "name": "pipeline-spike",
-  "version": "0.1.0",
-  "description": "Spike plugin: one skill and one SessionStart hook"
-}
