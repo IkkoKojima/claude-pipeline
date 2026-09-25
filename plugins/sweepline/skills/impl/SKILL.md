@@ -111,7 +111,7 @@ bash $KIT/scripts/verify.sh                       # 変更ファイルから swe
 
 | 結果 | 操作 |
 |---|---|
-| マージ | `label-add merged_unverified`、`label-del ready`、`label-del in_progress`。コメント: PR 番号 + 「実機確認の観点」「判断した点」「Codex 指摘の採否」「Codex 往復」を PR 本文から転記。**issue は close しない** (実機確認の OK を `/sweepline:release` が処理するまで open のまま) |
+| マージ | `label-add merged_unverified`、`label-del ready`、`label-del in_progress`。コメント (先頭行は固定書式 `sweepline: PR #<番号> をマージしました (squash → main <sha>)`。dashboard がこの行から PR を引く): PR 番号 + 「実機確認の観点」「判断した点」「Codex 指摘の採否」「Codex 往復」を PR 本文から転記。**issue は close しない** (実機確認の OK を `/sweepline:release` が処理するまで open のまま) |
 | blocked | `label-add blocked`、`label-del ready`、`label-del in_progress`。理由と owner への依頼をコメント |
 | 中断 (時間切れ / 利用枠) | ラベルはそのまま。push 済みの状態と進捗をコメント。次の sweep が回収する |
 
