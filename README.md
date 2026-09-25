@@ -7,6 +7,10 @@ GitHub Issues に `pv:ready` を付けると、Claude Code on the web のクラ�
 設計と経緯: [pokemonitor/docs/pipeline/plugin-plan.md](https://github.com/IkkoKojima/pokemonitor/blob/main/docs/pipeline/plugin-plan.md)
 (v4.2 の運用設計は同 `cloud-session-pipeline-plan.md`。pokemonitor は private なので第三者には開けない。要点はこの README にある)。
 
+## ダッシュボード (sweepline dashboard)
+
+issue をスマホのブラウザからカンバンで動かす Web が別リポジトリ [IkkoKojima/sweepline_dashboard](https://github.com/IkkoKojima/sweepline_dashboard) にある。GitHub アカウントでログインし、GitHub App `sweepline-dashboard` を自分の repo にインストールすると、`sweepline.toml` のある repo の issue が 6 列 (バックログ / 着手 / 進行中 / 要確認 / マージ済み / 完了) で見える。列の移動はラベル操作に対応し、「進行中」への移動は `/sweepline:impl N` を入力済みにした Claude Code on the web の画面を開いて利用者が送信する (トークンは預からない)。
+
 ## 導入 (オーナーの作業)
 
 一度だけ (アカウント):
