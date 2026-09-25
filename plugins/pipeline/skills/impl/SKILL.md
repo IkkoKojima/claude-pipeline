@@ -72,7 +72,7 @@ bash $KIT/scripts/codex_review.sh plan <round> .pipeline/plan-$N.md $N        # 
 ```
 
 - `revise` → 指摘を評価し、妥当なものは計画を直して次ラウンド (計画末尾に「ラウンド r: ID → 採用 / 不採用 (根拠)」を追記)
-- `skipped` で `REASON=api_limit`、または 2 回連続 `skipped` → **Agent ツールで `pipeline:plan-reviewer`** を起動し、計画本文・issue 番号・
+- `skipped` で `REASON=api_limit` か `REASON=no_api_key` (即座に返る。待たない)、または 2 回連続 `skipped` → **Agent ツールで `pipeline:plan-reviewer`** を起動し、計画本文・issue 番号・
   `verify.review_focus`・禁止領域を渡す。結果を `.pipeline/reviews/plan-r<round>-fable.md` に保存し Codex と同じ扱い。PR 本文に「Fable 代替 (理由)」を明記
 - 5 往復で approved にならなければ、残る指摘を「実装時の注意」として計画に書いて進む
 - 最終計画をコメントで更新してから手順 4 へ

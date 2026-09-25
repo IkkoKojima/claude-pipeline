@@ -222,6 +222,11 @@ $ISSUE_BLOCK
 
 # ---- run (3 回まで再試行) ------------------------------------------------------------------
 if ! command -v codex >/dev/null 2>&1; then finish skipped "codex CLI not found"; fi
+# キーが無い (環境に OPENAI_API_KEY が無く codex も未ログイン) なら即 skipped にする。
+# 待っても通らないので、/pipeline:impl は REASON=no_api_key を api_limit と同じ扱い (Fable 代替) にする
+if [ -z "${OPENAI_API_KEY:-}" ] && ! codex login status >/dev/null 2>&1; then
+  finish skipped "no_api_key: OPENAI_API_KEY が無く codex も未ログイン (環境の API credentials に登録すると Codex レビューが有効になる)"
+fi
 if ! command -v timeout >/dev/null 2>&1; then timeout() { shift; "$@"; }; fi
 attempt=0; rc=1
 while [ $attempt -lt 3 ]; do
