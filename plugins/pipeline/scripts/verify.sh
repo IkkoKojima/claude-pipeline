@@ -148,12 +148,20 @@ if [ "$N" -eq 0 ]; then
 fi
 
 # ---- 特殊コマンド ---------------------------------------------------------------------------
+# pip 経路は隔離 venv (.pipeline/venv、stack の path 直下) を使う。VM の system python に入れると Debian 由来の
+# パッケージ (PyJWT / cffi 等) と衝突して uninstall できない (shadowverse_tool の初回 sweep で発生)。
+# venv は python_session.sh (python_version の pin 付き) が先に作っていればそれを使い、無ければここで python3 で作る。
 PY_INSTALL='if [ -f uv.lock ]; then uv sync --group dev || uv sync;
-elif [ -f requirements-ci.txt ]; then '"$PY"' -m pip install -q -r requirements-ci.txt;
-elif [ -f requirements.txt ]; then '"$PY"' -m pip install -q -r requirements.txt;
+elif [ -f requirements-ci.txt ] || [ -f requirements.txt ]; then
+  VENV=.pipeline/venv; [ -x "$VENV/bin/python" ] || '"$PY"' -m venv "$VENV" || exit 1
+  "$VENV/bin/python" -m pip install -q --upgrade pip >/dev/null 2>&1 || true
+  REQ=requirements-ci.txt; [ -f "$REQ" ] || REQ=requirements.txt
+  "$VENV/bin/python" -m pip install -q -r "$REQ";
 else echo "python install: nothing to install (no uv.lock / requirements-ci.txt / requirements.txt)"; fi'
 PY_TEST='if [ -d tests ] || [ -d test ] || [ -f pytest.ini ] || [ -f pyproject.toml ]; then
-  if [ -f uv.lock ]; then uv run pytest -q; else '"$PY"' -m pytest -q; fi; rc=$?
+  if [ -f uv.lock ]; then uv run pytest -q; else
+    PYX=.pipeline/venv/bin/python; [ -x "$PYX" ] || PYX='"$PY"'
+    "$PYX" -m pytest -q; fi; rc=$?
   if [ $rc -eq 5 ]; then echo "no tests (pytest collected 0 items)"; rc=0; fi; exit $rc
 else echo "no tests"; fi'
 

@@ -118,7 +118,7 @@ workflows = ["android-internal", "ios-testflight"]
 
 ## 既知の制約
 
-- `python_version` は setup (uv) にだけ効く。`uv.lock` が無い repo の検証は VM 既定の `python3` (3.11) で走る
+- pip 経路の python は隔離 venv (`<stack path>/.pipeline/venv`) で動く。`python_version` は uv がある環境でその venv の版になる (無ければ VM 既定の 3.11)
 - `release.version_stack` が無い (版が `pubspec.yaml` / `package.json` / `pyproject.toml` に無い) repo では、`/pipeline:release` の版上げは手動
 - 既存の自動化 (issue コメントをコマンドとして読む workflow など) がある repo では、`/pipeline:setup` の案内に従って衝突を確認する
 - routine の作成はオーナーの OAuth が要る。対話セッションでは `RemoteTrigger`、それ以外は `scripts/routine_api.py ensure`

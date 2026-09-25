@@ -32,9 +32,21 @@ if [ -z "$REQ" ]; then
   say "依存ファイル無し (uv.lock / requirements*.txt) → skip"
 elif [ ! -f "$REQ" ]; then
   say "WARN: requirements '$REQ' が無い → skip"
-elif { pip install -q -r "$REQ" || pip install -q --break-system-packages -r "$REQ"; } > "$LOG" 2>&1; then
-  say "pip install -r $REQ: ok"
 else
-  say "WARN: pip install -r $REQ failed (log: $LOG)"
+  # 隔離 venv (.pipeline/venv)。python_version があり uv が使えればその版で作る (無ければ VM の python3)
+  VENV=.pipeline/venv; PYVER="$(opt python_version "")"
+  if [ ! -x "$VENV/bin/python" ]; then
+    if [ -n "$PYVER" ] && command -v uv >/dev/null 2>&1; then
+      uv venv --python "$PYVER" "$VENV" > "$LOG" 2>&1 || python3 -m venv "$VENV" >> "$LOG" 2>&1
+    else
+      python3 -m venv "$VENV" > "$LOG" 2>&1
+    fi
+  fi
+  if [ -x "$VENV/bin/python" ] && { "$VENV/bin/python" -m pip install -q --upgrade pip >/dev/null 2>&1 || true; } \
+     && "$VENV/bin/python" -m pip install -q -r "$REQ" >> "$LOG" 2>&1; then
+    say "venv ($("$VENV/bin/python" --version 2>&1)) + pip install -r $REQ: ok"
+  else
+    say "WARN: venv / pip install -r $REQ failed (log: $LOG)"
+  fi
 fi
 exit 0
