@@ -1,6 +1,8 @@
 {
   "name": "pipeline",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Issue 駆動の自動実装パイプライン (Claude Code cloud sessions + GitHub Issues)。/pipeline:setup で導入、pipeline.toml で差し替え",
-  "author": { "name": "IkkoKojima" }
+  "author": {
+    "name": "IkkoKojima"
+  }
 }

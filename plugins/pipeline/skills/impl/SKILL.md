@@ -19,6 +19,7 @@ description: issue を「計画 → 計画レビュー (Codex / Fable 代替) �
 
 ```bash
 KIT="${CLAUDE_PLUGIN_ROOT:-}"; [ -d "$KIT/scripts" ] || KIT=/opt/pipeline/kit/plugins/pipeline
+[ -d "$KIT/scripts" ] || KIT="$(ls -d ~/.claude/plugins/marketplaces/*/plugins/pipeline 2>/dev/null | head -1)"   # marketplace clone (marketplace update で最新になる) を優先
 [ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline*' -path '*/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
 PC="python3 $KIT/scripts/pipeline_config.py"; GH="bash $KIT/scripts/gh.sh"
 SLUG="$($PC repo)"; R="repos/$SLUG"; L="$($PC labels)"      # L は JSON: ready / in_progress / merged_unverified / blocked / skipped (値が実ラベル名。`$GH label-name <key>` でも引ける)
@@ -42,8 +43,8 @@ N=<issue>; $GH issue-get $N                 # state / labels / body (body は un
 
 - open でない / blocked・skipped・merged_unverified のラベルがある → スキップ (理由を報告)
 - in_progress が付いていて `$GH last-labeled $N <in_progress>` が 6 時間以内 → 他セッションが処理中。スキップ
-- claim: `$GH label-add $N <in_progress>` → `$GH comment $N -` に「着手 (session: ${CLAUDE_CODE_REMOTE_SESSION_ID:-local}, <UTC 時刻>)」→ `sleep 10` →
-  `$GH comment-find $N "着手 ("` が自分の分だけ (6 時間以内に他の「着手」があれば手を引く)
+- claim: `$GH label-add $N <in_progress>` → `$GH comment $N -` に「pipeline claim (session: ${CLAUDE_CODE_REMOTE_SESSION_ID:-local}, <UTC 時刻>)」→ `sleep 10` →
+  `$GH comment-find $N "pipeline claim ("` が自分の分だけ (6 時間以内に他の claim があれば手を引く)。文言は固定 (他の自動化の issue コメント・コマンドと衝突させない)
 - `origin` に `claude/task-$N-*` があれば checkout して**続きから** (open PR があれば手順 6 の最終検証から)
 
 ## 2. 計画 (セッション本体が書く)

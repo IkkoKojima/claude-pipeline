@@ -9,6 +9,7 @@ description: オーナーの一言から対話で要件を固め、テンプレ�
 
 ```bash
 KIT="${CLAUDE_PLUGIN_ROOT:-}"; [ -d "$KIT/scripts" ] || KIT=/opt/pipeline/kit/plugins/pipeline
+[ -d "$KIT/scripts" ] || KIT="$(ls -d ~/.claude/plugins/marketplaces/*/plugins/pipeline 2>/dev/null | head -1)"   # marketplace clone (marketplace update で最新になる) を優先
 [ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline*' -path '*/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
 PC="python3 $KIT/scripts/pipeline_config.py"; GH="bash $KIT/scripts/gh.sh"
 SLUG="$($PC repo)"; READY="$($PC labels | python3 -c 'import json,sys; print(json.load(sys.stdin)["ready"])')"

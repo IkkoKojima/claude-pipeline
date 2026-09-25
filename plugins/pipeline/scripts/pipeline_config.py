@@ -200,8 +200,9 @@ def load(root: Path) -> dict:
     cfg["repo"] = raw.get("repo") or git_repo_slug(root)
     cfg["labels"] = dict(DEFAULT_LABELS, **raw.get("labels", {}))
     cfg["stacks"] = effective_stacks(cfg)
-    if not cfg["env"].get("name"):
-        cfg["env"]["name"] = "pipeline-" + "-".join(dict.fromkeys(s["name"] for s in cfg["stacks"])) if cfg["stacks"] else "pipeline-generic"
+    if not cfg["env"].get("name"):  # 既定は repo 名 (init_script は repo の設定から作るので repo 単位)
+        repo_name = (cfg["repo"].split("/")[-1] if cfg["repo"] else "") or root.name
+        cfg["env"]["name"] = "pipeline-" + re.sub(r"[^A-Za-z0-9._-]+", "-", repo_name).strip("-").lower()
     if not cfg["release"].get("version_stack") and cfg["stacks"]:
         cfg["release"]["version_stack"] = next((s["name"] for s in cfg["stacks"] if s["version"]), "")
     return cfg
@@ -373,7 +374,7 @@ cron = "0 4,16 * * *"         # UTC (= 13:00 / 01:00 JST)
 hours_budget = 2
 
 [env]
-# name = "pipeline-{env_name}"  # 省略時は "pipeline-" + stacks 名
+# name = "pipeline-<repo 名>"   # 省略時の既定。環境は repo 単位 (setup script は repo の設定から作る)
 extra_hosts = []              # 既定リスト + stack のホストに追加するドメイン
 extra_apt = []                # setup で apt-get install するパッケージ
 [env.vars]

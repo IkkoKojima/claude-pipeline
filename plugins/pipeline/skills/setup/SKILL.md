@@ -10,6 +10,7 @@ description: 自動実装パイプラインをこのリポジトリに導入・�
 
 ```bash
 KIT="${CLAUDE_PLUGIN_ROOT:-}"; [ -d "$KIT/scripts" ] || KIT=/opt/pipeline/kit/plugins/pipeline
+[ -d "$KIT/scripts" ] || KIT="$(ls -d ~/.claude/plugins/marketplaces/*/plugins/pipeline 2>/dev/null | head -1)"   # marketplace clone (marketplace update で最新になる) を優先
 [ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline*' -path '*/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
 PC="python3 $KIT/scripts/pipeline_config.py"; EA="python3 $KIT/scripts/env_api.py"; GH="bash $KIT/scripts/gh.sh"
 mkdir -p .pipeline; grep -qE '^\.pipeline/?$' .gitignore 2>/dev/null || printf '.pipeline/\n' >> .gitignore   # 作業ディレクトリ (ログ・生成物) は ignore
@@ -71,7 +72,8 @@ python3 $KIT/scripts/routine_body.py create --env-id "$ENV_ID" > .pipeline/routi
 ```
 
 - `ToolSearch select:RemoteTrigger` でツールを読み込み、`{action:"list"}` で `name` が `<repo> sweep` の routine を探す。
-  **ツールが無い場合** (サブエージェント / 非対話): `.pipeline/routine.json` の内容と「claude.ai/code/routines で New routine → 同じ内容 (name / repo / 環境 / model / prompt / cron、Connectors はすべて外す) を入力」を案内して手順 4 へ進む (疎通 run はオーナーが `/pipeline:run N` で行う)
+  **ツールが無い場合** (サブエージェント / 非対話): `python3 $KIT/scripts/routine_api.py ensure --body .pipeline/routine.json` (同じ OAuth で作成 + コネクタ解除。id を返す)。
+  それも失敗したら `.pipeline/routine.json` の内容と「claude.ai/code/routines で New routine → 同じ内容 (name / repo / 環境 / model / prompt / cron、Connectors はすべて外す) を入力」を案内して手順 4 へ進む
 - 無ければ `{action:"create", body:<.pipeline/routine.json の内容>}` → 続けて **必ず** `{action:"update", trigger_id, body:{"clear_mcp_connections":true}}`
   (省略すると全コネクタが付く)。あれば `routine_body.py update-prompt --env-id` の body で `update` (環境や prompt の追従) + `clear_mcp_connections`
 - 応答の `mcp_connections` が `[]`、`job_config.ccr.environment_id` が `$ENV_ID`、`enabled: true` を確認して trigger id を控える
@@ -80,9 +82,15 @@ python3 $KIT/scripts/routine_body.py create --env-id "$ENV_ID" > .pipeline/routi
 ## 4. GitHub のラベルと固定 issue
 
 ```bash
+$GH api "repos/$($PC repo)/labels?per_page=100" --jq '.[] | "\(.name)\t\(.description)"'   # 既存ラベルを先に見る
 $GH ensure-labels
 $GH status-issue          # 無ければ作る。番号を表示
 ```
+
+- **既存ラベルとの衝突**: 既定名 (`pv:ready` など) と同名のラベルが**別の意味**で使われている (説明が違う、他の自動化が読む) なら、`pipeline.toml` の `[labels]` で
+  接頭辞を変えてから `ensure-labels` する (例: `cp:ready`)。`ensure-labels` は同名があると黙って流用する
+- **既存の自動化との衝突**: `.github/workflows/*.yml` に `issue_comment` / `issues` / `labeled` トリガーがあれば、パイプラインのコメント (`pipeline claim (...)`、
+  計画コメント、sweep の要約) やラベル遷移に反応しないかを確認し、反応するならユーザーに知らせる (無効化するか、共存させるかはユーザーの判断)
 
 ## 5. CLAUDE.md (任意、確認してから)
 
@@ -105,7 +113,7 @@ $GH status-issue          # 無ければ作る。番号を表示
 
 ## `--update`
 
-手順 2 だけを全 `pipeline-*` 環境に対して行う (kit sha を最新にし init_script を再生成)。routine は触らない。`pipeline.toml` の `kit` を更新して commit。
+手順 2 だけを**この repo の環境 (`env.name`)** に対して行う (kit sha を最新にし init_script を再生成)。他の repo の環境は各 repo で実行する (init_script は repo の設定から作るため)。routine は触らない。`pipeline.toml` の `kit` を更新して commit。
 
 ## `--deploy`
 

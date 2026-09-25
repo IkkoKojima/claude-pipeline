@@ -9,6 +9,7 @@ description: routine が呼ぶ無人運転の入口。リリースロック → 
 
 ```bash
 KIT="${CLAUDE_PLUGIN_ROOT:-}"; [ -d "$KIT/scripts" ] || KIT=/opt/pipeline/kit/plugins/pipeline
+[ -d "$KIT/scripts" ] || KIT="$(ls -d ~/.claude/plugins/marketplaces/*/plugins/pipeline 2>/dev/null | head -1)"   # marketplace clone (marketplace update で最新になる) を優先
 [ -d "$KIT/scripts" ] || KIT="$(dirname "$(dirname "$(find ~/.claude/plugins -path '*pipeline*' -path '*/scripts/pipeline_config.py' 2>/dev/null | head -1)")")"
 PC="python3 $KIT/scripts/pipeline_config.py"; GH="bash $KIT/scripts/gh.sh"
 SLUG="$($PC repo)"; L="$($PC labels)"; MAX="$($PC get sweep.max_issues)"; BUDGET="$($PC get sweep.hours_budget)"
@@ -51,7 +52,7 @@ KIT_SHA="$(cat "$(dirname "$(dirname "$KIT")")/.sha" 2>/dev/null | cut -c1-7)"
 
 - routine-fire-payload に `issues: 30 31` の行があれば、**その番号だけ**を対象にする (ready でないものはスキップして理由を報告)
 - 無ければ `$GH issues-ready` (番号順)。`Depends on: #M` が open のものは後回し。回収分を含めて合計 `MAX` 件まで
-- claim は `/pipeline:impl` の手順 1 (in_progress → 「着手」コメント → 10 秒後に再確認)
+- claim は `/pipeline:impl` の手順 1 (in_progress → 「pipeline claim」コメント → 10 秒後に再確認)
 - `--dry-run` はここで終了する (claim しない)。コメントは手順 5 の書式 1 本だけ (先頭行に `(dry-run)` を付け、対象 = 選択した issue、回収候補、健全性を書く)
 
 ## 4. 実行

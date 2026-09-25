@@ -5,7 +5,7 @@ GitHub Issues に `pv:ready` を付けると、Claude Code on the web のクラ�
 「計画 → 計画レビュー (Codex / Fable) → 実装 (Opus) → 検証 → PR → 自動マージ」まで無人で通し、`/pipeline:release` で配信する。
 
 設計と経緯: [pokemonitor/docs/pipeline/plugin-plan.md](https://github.com/IkkoKojima/pokemonitor/blob/main/docs/pipeline/plugin-plan.md)
-(v4.2 の運用設計は同 `cloud-session-pipeline-plan.md`)。
+(v4.2 の運用設計は同 `cloud-session-pipeline-plan.md`。pokemonitor は private なので第三者には開けない。要点はこの README にある)。
 
 ## 導入 (オーナーの作業)
 
@@ -115,6 +115,18 @@ workflows = ["android-internal", "ios-testflight"]
 
 `scripts/providers/<type>.sh <fn>`: `preflight` / `deploy <version> <sha>` / `status <id>` / `secrets_list` / `notes_limits`。`supabase-mcp` は MCP を使う手順書。
 各 `[[release.providers]]` には共通で `only_if_changed = ["glob", ...]` を書ける (PREV..RELEASE_SHA にその差分が無ければ「スキップ (差分なし)」)。`--scope type,...` は provider の type で絞る。
+
+## 既知の制約
+
+- `python_version` は setup (uv) にだけ効く。`uv.lock` が無い repo の検証は VM 既定の `python3` (3.11) で走る
+- `release.version_stack` が無い (版が `pubspec.yaml` / `package.json` / `pyproject.toml` に無い) repo では、`/pipeline:release` の版上げは手動
+- 既存の自動化 (issue コメントをコマンドとして読む workflow など) がある repo では、`/pipeline:setup` の案内に従って衝突を確認する
+- routine の作成はオーナーの OAuth が要る。対話セッションでは `RemoteTrigger`、それ以外は `scripts/routine_api.py ensure`
+
+## プラグインの更新 (作者向け)
+
+`claude plugin update` は `plugins/pipeline/.claude-plugin/plugin.json` の `version` が上がったときだけ新しい版を取り込む。
+公開する変更を main に入れたら `version` (と marketplace.json の同名項目) を必ず上げる。利用側は `claude plugin marketplace update claude-pipeline && claude plugin update pipeline@claude-pipeline`。
 
 ## 配布の仕組み
 

@@ -1,6 +1,8 @@
 {
   "name": "claude-pipeline",
-  "owner": { "name": "IkkoKojima" },
+  "owner": {
+    "name": "IkkoKojima"
+  },
   "plugins": [
     {
       "name": "pipeline",
