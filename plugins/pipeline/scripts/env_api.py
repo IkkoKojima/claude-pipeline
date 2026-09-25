@@ -16,6 +16,7 @@ CLI (`claude`) が Default 環境を作るときに使う endpoint をそのま�
   env_api.py render [--kit-sha SHA] [--kit-repo owner/repo] [--config-root DIR] > init_script.sh
   env_api.py ensure --name N --init-script FILE [--hosts a,b] [--var K=V ...] [--description D] [--replace-vars]
   env_api.py repo-access owner/name        クラウド側から repo に到達できるか (200 = 可)
+  env_api.py rename <name|env_id> <new_name>   環境を改名 (id と設定はそのまま。pipeline.toml の env.name も合わせる)
   env_api.py github-status
 
 API credentials (proxy 注入のキー) はこの API に無い。Web UI で貼る。
@@ -171,6 +172,22 @@ def ensure(name: str, init_script: str, hosts: list[str], vars_: dict, descripti
     return b.get("environment_id") or b.get("id")
 
 
+def rename(ref: str, new_name: str, description: str | None = None) -> str:
+    """環境の名前 (と任意で説明) だけを変える。id と設定はそのまま (routine は id で参照するので影響なし)。"""
+    cur = get_env(ref)
+    if not cur:
+        raise SystemExit(f"env_api: environment not found: {ref}")
+    if get_env(new_name):
+        raise SystemExit(f"env_api: name already in use: {new_name}")
+    cfg = cur.get("config") or {}
+    cfg.pop("sub_type", None)
+    st, b = _req("POST", f"/v1/environment_providers/{cur['environment_id']}",
+                 {"name": new_name, "description": description or cur.get("description") or f"claude-pipeline: {new_name}", "config": cfg})
+    if st != 200:
+        raise SystemExit(f"env_api: rename failed {st}: {str(b)[:400]}")
+    return cur["environment_id"]
+
+
 def repo_access(slug: str) -> int:
     st, _ = _req("GET", f"/api/oauth/organizations/{_org()}/code/repos/{slug}", beta=False)
     return st
@@ -198,6 +215,7 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("--var", action="append", default=[]); e.add_argument("--description", default=""); e.add_argument("--replace-vars", action="store_true")
     ra = sub.add_parser("repo-access"); ra.add_argument("slug")
     sub.add_parser("github-status")
+    rn = sub.add_parser("rename"); rn.add_argument("ref", help="現在の名前か env_id"); rn.add_argument("new_name"); rn.add_argument("--description")
     a = ap.parse_args(argv)
 
     if a.cmd == "whoami":
@@ -243,6 +261,8 @@ def main(argv: list[str] | None = None) -> int:
         st = repo_access(a.slug); print(st); return 0 if st == 200 else 1
     if a.cmd == "github-status":
         print(json.dumps(github_status(), ensure_ascii=False)); return 0
+    if a.cmd == "rename":
+        print(rename(a.ref, a.new_name, a.description)); return 0
     return 0
 
 
