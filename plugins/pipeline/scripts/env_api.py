@@ -183,6 +183,11 @@ def github_status() -> dict:
 
 # ---------------------------------------------------------------------------------------------
 def main(argv: list[str] | None = None) -> int:
+    try:  # Windows: cp932 と CRLF を避ける (SKILL.md の `$(...)` 代入に \r が混ざる)
+        sys.stdout.reconfigure(encoding="utf-8", newline="\n")
+        sys.stderr.reconfigure(encoding="utf-8", newline="\n")
+    except (AttributeError, ValueError):
+        pass
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("whoami")
