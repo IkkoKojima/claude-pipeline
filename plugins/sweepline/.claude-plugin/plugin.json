@@ -1,0 +1,8 @@
+{
+  "name": "sweepline",
+  "version": "0.3.0",
+  "description": "Issue 駆動の自動実装パイプライン (Claude Code cloud sessions + GitHub Issues)。/sweepline:setup で導入、sweepline.toml で差し替え",
+  "author": {
+    "name": "IkkoKojima"
+  }
+}
