@@ -9,7 +9,7 @@ endpoint は Claude Code の `RemoteTrigger` ツールと同じ `/v1/code/trigge
   routine_api.py get <trigger_id>
   routine_api.py find <name>                         name が一致する routine の id (無ければ exit 1)
   routine_api.py create --body FILE [--clear-connectors]   作成 (body は routine_body.py create の出力)。作成後にコネクタを外す
-  routine_api.py update <trigger_id> --body FILE     部分更新 (job_config は丸ごと置換なので注意)
+  routine_api.py update <trigger_id> --body FILE | --json '{"enabled": false}'   部分更新 (job_config は丸ごと置換なので注意)
   routine_api.py clear-connectors <trigger_id>       全コネクタを外す
   routine_api.py run <trigger_id> [--text "issues: 12 15"]   即時実行 → session id / URL
   routine_api.py ensure --body FILE                  name で探し、無ければ create、あれば job_config を update。常にコネクタを外す。id を表示
@@ -70,7 +70,7 @@ def main(argv: list[str] | None = None) -> int:
     g = sub.add_parser("get"); g.add_argument("trigger_id")
     f = sub.add_parser("find"); f.add_argument("name")
     c = sub.add_parser("create"); c.add_argument("--body", required=True); c.add_argument("--clear-connectors", action="store_true")
-    u = sub.add_parser("update"); u.add_argument("trigger_id"); u.add_argument("--body", required=True)
+    u = sub.add_parser("update"); u.add_argument("trigger_id"); u.add_argument("--body", help="JSON ファイル"); u.add_argument("--json", help="JSON 文字列 (例: '{\"enabled\": false}')")
     cc = sub.add_parser("clear-connectors"); cc.add_argument("trigger_id")
     r = sub.add_parser("run"); r.add_argument("trigger_id"); r.add_argument("--text", default="sweep")
     e = sub.add_parser("ensure"); e.add_argument("--body", required=True)
@@ -95,7 +95,9 @@ def main(argv: list[str] | None = None) -> int:
             t = clear_connectors(t["id"])
         print(summarize(t)); return 0
     if a.cmd == "update":
-        body = json.loads(Path(a.body).read_text(encoding="utf-8"))
+        if not (a.body or a.json):
+            raise SystemExit("routine_api: update には --body FILE か --json '<JSON>' が要る")
+        body = json.loads(a.json) if a.json else json.loads(Path(a.body).read_text(encoding="utf-8"))
         print(summarize(_req("POST", f"{BASE}/{a.trigger_id}", body).get("trigger", {}))); return 0
     if a.cmd == "clear-connectors":
         print(summarize(clear_connectors(a.trigger_id))); return 0
