@@ -3,7 +3,9 @@ name: req
 description: オーナーの一言から対話で要件を固め、テンプレ準拠の GitHub issue を作る (完了条件・実機確認の観点まで)。「OK」で着手ラベル (pv:ready) を付け、次の sweep が着手する。ローカル / クラウドどちらでも動く
 ---
 
-# /sweepline:req <一言>
+# /sweepline:req [--backlog] <一言>
+
+`--backlog` は sweepline dashboard の「Claude Code で要件を詰める」ボタンから渡される。付いていれば **作成だけ** (ラベルを付けない = バックログ) を既定にし、手順 6 の文言は「この「OK」でラベル無しの issue を作ります (着手は dashboard かラベルで)」に変え、手順 7 の「今すぐ回しますか」は尋ねない。
 
 思いつき (例: 「設定画面にダークモード切替を足したい」) を、パイプラインが着手できる issue に落とす。GitHub 操作は REST (`gh.sh`)。
 
@@ -29,7 +31,7 @@ SLUG="$($PC repo)"; READY="$($PC labels | python3 -c 'import json,sys; print(jso
    - 「OK」→ `$GH issue-create --title "<title>" --body-file .sweepline/issue-new.md --label "$READY"`
    - 「作成だけ」→ ラベル無しで作成
    - 修正指示 → 直して再提示 (1 回にまとめる)
-7. ローカルなら「今すぐ回しますか (`/sweepline:run N`)」と 1 回だけ尋ねる。無回答なら何もしない
+7. ローカルなら「今すぐ回しますか (`/sweepline:run N`)」と 1 回だけ尋ねる。無回答なら何もしない (`--backlog` のときは尋ねない)
 
 ## 書き方の規約
 
